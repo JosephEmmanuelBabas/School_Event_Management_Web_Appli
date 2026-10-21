@@ -6,6 +6,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.school_event.school_event_management.audit.AuditAction;
+import com.school_event.school_event_management.audit.AuditService;
 import com.school_event.school_event_management.dto.VenueRequest;
 import com.school_event.school_event_management.dto.VenueResponse;
 import com.school_event.school_event_management.entity.Venue;
@@ -16,10 +18,14 @@ import com.school_event.school_event_management.repository.venueRepository;
 @Service
 public class VenueService {
 
-    private final venueRepository venueRepository;
+    private static final String AUDIT_TABLE = "venue";
 
-    public VenueService(venueRepository venueRepository) {
+    private final venueRepository venueRepository;
+    private final AuditService auditService;
+
+    public VenueService(venueRepository venueRepository, AuditService auditService) {
         this.venueRepository = venueRepository;
+        this.auditService = auditService;
     }
 
     @Transactional(readOnly = true)
@@ -41,8 +47,10 @@ public class VenueService {
         if (venueRepository.existsByVenueName(name)) {
             throw new DuplicateResourceException("A venue named '" + name + "' already exists.");
         }
-        Venue venue = new Venue(name, request.location().trim(), request.capacity());
-        return VenueResponse.from(venueRepository.save(venue));
+        Venue saved = venueRepository.save(
+                new Venue(name, request.location().trim(), request.capacity()));
+        auditService.log(AuditAction.CREATED, AUDIT_TABLE, saved.getVenueId());
+        return VenueResponse.from(saved);
     }
 
     @Transactional
@@ -55,7 +63,9 @@ public class VenueService {
         venue.setVenueName(name);
         venue.setLocation(request.location().trim());
         venue.setCapacity(request.capacity());
-        return VenueResponse.from(venueRepository.save(venue));
+        Venue saved = venueRepository.save(venue);
+        auditService.log(AuditAction.UPDATED, AUDIT_TABLE, saved.getVenueId());
+        return VenueResponse.from(saved);
     }
 
     @Transactional
@@ -65,6 +75,7 @@ public class VenueService {
         // Force the DELETE now, so a foreign-key violation (venue still used
         // by an event) surfaces here and becomes a 409 response.
         venueRepository.flush();
+        auditService.log(AuditAction.DELETED, AUDIT_TABLE, id);
     }
 
     private Venue getVenueOrThrow(Integer id) {

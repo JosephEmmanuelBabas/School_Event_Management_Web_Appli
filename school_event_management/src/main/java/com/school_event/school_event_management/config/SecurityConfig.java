@@ -35,6 +35,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/venues/**")
                         .hasAnyRole("SUPER_ADMIN", "EVENT_ORGANIZER")
                 .requestMatchers("/api/venues/**").hasRole("EVENT_ORGANIZER")
+                // Audit log: Super Admin only (read-only through the API).
+                .requestMatchers("/api/audit-logs/**").hasRole("SUPER_ADMIN")
                 .anyRequest().authenticated())
             .formLogin(form -> form
                 // Setting loginPage turns off Spring's built-in HTML login page.

@@ -3,6 +3,7 @@ package com.school_event.school_event_management.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -15,6 +16,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.school_event.school_event_management.audit.AuditAction;
+import com.school_event.school_event_management.audit.AuditService;
 import com.school_event.school_event_management.dto.VenueRequest;
 import com.school_event.school_event_management.dto.VenueResponse;
 import com.school_event.school_event_management.entity.Venue;
@@ -28,21 +31,25 @@ class VenueServiceTest {
     @Mock
     private venueRepository venueRepository;
 
+    @Mock
+    private AuditService auditService;
+
     @InjectMocks
     private VenueService venueService;
 
     @Test
-    void create_rejectsDuplicateName() {
+    void create_rejectsDuplicateName_andWritesNoAuditEntry() {
         when(venueRepository.existsByVenueName("Gym")).thenReturn(true);
 
         assertThrows(DuplicateResourceException.class,
                 () -> venueService.create(new VenueRequest("Gym", "Main Building", 100)));
 
         verify(venueRepository, never()).save(any());
+        verify(auditService, never()).log(any(), any(), any());
     }
 
     @Test
-    void create_trimsTextBeforeSaving() {
+    void create_trimsTextBeforeSaving_andWritesAuditEntry() {
         when(venueRepository.existsByVenueName("Gym")).thenReturn(false);
         when(venueRepository.save(any(Venue.class))).thenAnswer(call -> call.getArgument(0));
 
@@ -51,6 +58,7 @@ class VenueServiceTest {
 
         assertEquals("Gym", response.venueName());
         assertEquals("Main Building", response.location());
+        verify(auditService).log(eq(AuditAction.CREATED), eq("venue"), any());
     }
 
     @Test
@@ -58,5 +66,16 @@ class VenueServiceTest {
         when(venueRepository.findById(99)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () -> venueService.findById(99));
+    }
+
+    @Test
+    void delete_writesAuditEntryWithTheVenueId() {
+        Venue venue = new Venue("Gym", "Main Building", 100);
+        when(venueRepository.findById(5)).thenReturn(Optional.of(venue));
+
+        venueService.delete(5);
+
+        verify(venueRepository).delete(venue);
+        verify(auditService).log(AuditAction.DELETED, "venue", 5);
     }
 }
