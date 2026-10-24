@@ -10,7 +10,11 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+
+import com.school_event.school_event_management.repository.userAccountRepository;
+import com.school_event.school_event_management.security.ActiveAccountFilter;
 
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -24,7 +28,8 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http,
+                                                   userAccountRepository users) throws Exception {
         http
             .authorizeHttpRequests(auth -> auth
                 // Spring forwards failed requests to /error; without this,
@@ -35,8 +40,15 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/venues/**")
                         .hasAnyRole("SUPER_ADMIN", "EVENT_ORGANIZER")
                 .requestMatchers("/api/venues/**").hasRole("EVENT_ORGANIZER")
+                // Events: both roles read, only Event Organizers write.
+                .requestMatchers(HttpMethod.GET, "/api/events/**")
+                        .hasAnyRole("SUPER_ADMIN", "EVENT_ORGANIZER")
+                .requestMatchers("/api/events/**").hasRole("EVENT_ORGANIZER")
                 // Audit log: Super Admin only (read-only through the API).
                 .requestMatchers("/api/audit-logs/**").hasRole("SUPER_ADMIN")
+                // User management: Super Admin only.
+                .requestMatchers("/api/users/**").hasRole("SUPER_ADMIN")
+                // /api/account/** (own profile and password): any logged-in user.
                 .anyRequest().authenticated())
             .formLogin(form -> form
                 // Setting loginPage turns off Spring's built-in HTML login page.
@@ -58,7 +70,9 @@ public class SecurityConfig {
                         response.setStatus(HttpServletResponse.SC_NO_CONTENT)))
             // Anonymous requests to protected URLs get a plain 401, not a redirect.
             .exceptionHandling(ex -> ex
-                .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)));
+                .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
+            // Re-check the logged-in account before any access decision is made.
+            .addFilterBefore(new ActiveAccountFilter(users), AuthorizationFilter.class);
         // CSRF protection stays ON (the default).
         return http.build();
     }

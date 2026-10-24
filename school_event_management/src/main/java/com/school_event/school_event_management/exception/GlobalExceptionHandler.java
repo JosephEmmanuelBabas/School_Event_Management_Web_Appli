@@ -51,6 +51,11 @@ public class GlobalExceptionHandler {
                 null);
     }
 
+    @ExceptionHandler(InvalidRequestException.class)
+    public ResponseEntity<ApiError> handleInvalidRequest(InvalidRequestException ex) {
+        return build(HttpStatus.BAD_REQUEST, ex.getMessage(), null);
+    }
+
     private ResponseEntity<ApiError> build(HttpStatus status, String message,
                                            Map<String, String> fieldErrors) {
         ApiError body = new ApiError(Instant.now(), status.value(),
