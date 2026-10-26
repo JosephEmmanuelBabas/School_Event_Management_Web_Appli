@@ -48,4 +48,16 @@ public interface EventRepository extends JpaRepository<Event, Integer> {
                        @Param("toDate") LocalDate toDate,
                        @Param("search") String search,
                        Pageable pageable);
+    
+    long countByEventStatus(String eventStatus);
+
+    // The next upcoming events from today onward. Venue and organizer load in the same query.
+    @Query("""
+            select e from Event e
+              join fetch e.venue
+              join fetch e.organizer
+            where e.eventStatus = 'Upcoming'
+              and e.eventDate >= :today
+            """)
+    List<Event> findUpcoming(@Param("today") LocalDate today, Pageable pageable); 
 }

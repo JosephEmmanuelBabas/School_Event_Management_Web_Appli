@@ -44,6 +44,12 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/events/**")
                         .hasAnyRole("SUPER_ADMIN", "EVENT_ORGANIZER")
                 .requestMatchers("/api/events/**").hasRole("EVENT_ORGANIZER")
+                // Participants: both roles read, only Event Organizers write.
+                .requestMatchers(HttpMethod.GET, "/api/participants/**")
+                        .hasAnyRole("SUPER_ADMIN", "EVENT_ORGANIZER")
+                .requestMatchers("/api/participants/**").hasRole("EVENT_ORGANIZER")
+                // Dashboard and reports: Super Admin only.
+                .requestMatchers("/api/dashboard/**", "/api/reports/**").hasRole("SUPER_ADMIN")
                 // Audit log: Super Admin only (read-only through the API).
                 .requestMatchers("/api/audit-logs/**").hasRole("SUPER_ADMIN")
                 // User management: Super Admin only.

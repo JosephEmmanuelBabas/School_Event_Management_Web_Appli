@@ -39,4 +39,6 @@ public interface userAccountRepository extends JpaRepository<userAccount, Intege
             where u.userId = :userId
             """)
     Optional<AccountState> findAccountState(@Param("userId") Integer userId);
+
+    long countByAccountStatus(String accountStatus);
 }

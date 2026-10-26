@@ -25,6 +25,7 @@ import com.school_event.school_event_management.exception.ResourceNotFoundExcept
 import com.school_event.school_event_management.repository.EventRepository;
 import com.school_event.school_event_management.repository.userAccountRepository;
 import com.school_event.school_event_management.repository.venueRepository;
+import com.school_event.school_event_management.repository.EventScheduleRepository;
 
 @Service
 public class EventService {
@@ -52,13 +53,16 @@ public class EventService {
             "The venue is already booked for an overlapping time on that date.";
 
     private final EventRepository events;
+    private final EventScheduleRepository schedules;
     private final venueRepository venues;
     private final userAccountRepository users;
     private final AuditService auditService;
 
-    public EventService(EventRepository events, venueRepository venues,
-                        userAccountRepository users, AuditService auditService) {
+    public EventService(EventRepository events, EventScheduleRepository schedules,
+                        venueRepository venues, userAccountRepository users,
+                        AuditService auditService) {
         this.events = events;
+        this.schedules = schedules;
         this.venues = venues;
         this.users = users;
         this.auditService = auditService;
@@ -99,6 +103,7 @@ public class EventService {
         if (request.eventDate().isBefore(LocalDate.now())) {
             throw new InvalidRequestException("Event date cannot be in the past.");
         }
+        
         Venue venue = findVenue(request.venueId());
         userAccount organizer = users.findById(organizerId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", organizerId));
@@ -129,6 +134,12 @@ public class EventService {
         if (!request.eventDate().equals(event.getEventDate())
                 && request.eventDate().isBefore(LocalDate.now())) {
             throw new InvalidRequestException("Event date cannot be moved into the past.");
+        }
+        
+        if (schedules.countOutsideWindow(id, request.startTime(), request.endTime()) > 0) {
+            throw new InvalidRequestException(
+                    "Some schedule entries fall outside the new start and end time. "
+                            + "Adjust or remove them first.");
         }
         Venue venue = findVenue(request.venueId());
         ensureVenueFree(venue.getVenueId(), request.eventDate(),

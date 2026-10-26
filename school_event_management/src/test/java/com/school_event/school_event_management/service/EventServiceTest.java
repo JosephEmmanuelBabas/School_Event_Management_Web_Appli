@@ -30,6 +30,7 @@ import com.school_event.school_event_management.exception.InvalidRequestExceptio
 import com.school_event.school_event_management.repository.EventRepository;
 import com.school_event.school_event_management.repository.userAccountRepository;
 import com.school_event.school_event_management.repository.venueRepository;
+import com.school_event.school_event_management.repository.EventScheduleRepository;
 
 @ExtendWith(MockitoExtension.class)
 class EventServiceTest {
@@ -45,6 +46,9 @@ class EventServiceTest {
 
     @Mock
     private AuditService auditService;
+
+    @Mock 
+    private EventScheduleRepository schedules;
 
     @InjectMocks
     private EventService eventService;
@@ -142,6 +146,19 @@ class EventServiceTest {
         assertThrows(InvalidRequestException.class, () -> eventService.update(2,
                 request(nextWeek, LocalTime.of(9, 0), LocalTime.of(11, 0))));
 
+        verify(auditService, never()).log(any(), any(), any());
+    }
+
+    @Test
+    void update_rejectsWhenScheduleEntriesFallOutsideTheNewTimes() {
+        when(events.findById(3)).thenReturn(Optional.of(eventWithStatus("Upcoming")));
+        when(schedules.countOutsideWindow(eq(3), any(LocalTime.class), any(LocalTime.class)))
+                .thenReturn(2L);
+
+        assertThrows(InvalidRequestException.class, () -> eventService.update(3,
+                request(nextWeek, LocalTime.of(9, 0), LocalTime.of(10, 0))));
+
+        verify(events, never()).saveAndFlush(any());
         verify(auditService, never()).log(any(), any(), any());
     }
 }
