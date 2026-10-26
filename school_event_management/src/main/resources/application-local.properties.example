@@ -1,0 +1,7 @@
+spring.datasource.password=change-me
+spring.flyway.password=change-me
+
+app.bootstrap.admin.username=admin
+app.bootstrap.admin.password=change-me-at-least-10-chars
+app.bootstrap.organizer.username=organizer1
+app.bootstrap.organizer.password=change-me-at-least-10-chars
