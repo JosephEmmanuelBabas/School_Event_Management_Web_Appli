@@ -22,4 +22,6 @@ public interface AuditLogRepository extends Repository<AuditLog, Integer> {
             order by a.logTimestamp desc, a.logId desc
             """)
     List<AuditLogResponse> findRecent(Pageable pageable);
+
+    long count();
 }

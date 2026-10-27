@@ -33,11 +33,12 @@ public class ParticipantController {
     }
 
     @GetMapping
-    public List<ParticipantResponse> list(@RequestParam(required = false) String search,
-                                          @RequestParam(required = false) String gradeLevel,
-                                          @RequestParam(defaultValue = "0") int page,
-                                          @RequestParam(defaultValue = "50") int size) {
-        return participantService.search(search, gradeLevel, page, size);
+    public ResponseEntity<List<ParticipantResponse>> list(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String gradeLevel,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "50") int size) {
+        return PagedResponses.of(participantService.search(search, gradeLevel, page, size));
     }
 
     @GetMapping("/{id}")

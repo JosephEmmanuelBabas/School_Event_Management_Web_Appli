@@ -49,6 +49,20 @@ public interface EventRepository extends JpaRepository<Event, Integer> {
                        @Param("search") String search,
                        Pageable pageable);
     
+    // Same filters as search(), without paging. Used for the total count.
+    @Query("""
+            select count(e) from Event e
+            where (:status = '' or e.eventStatus = :status)
+              and (:venueId = 0 or e.venue.venueId = :venueId)
+              and e.eventDate >= :fromDate
+              and e.eventDate <= :toDate
+              and (:search = '' or lower(e.eventName) like lower(concat('%', :search, '%')))
+            """)
+    long countSearch(@Param("status") String status,
+                     @Param("venueId") Integer venueId,
+                     @Param("fromDate") LocalDate fromDate,
+                     @Param("toDate") LocalDate toDate,
+                     @Param("search") String search);                   
     long countByEventStatus(String eventStatus);
 
     // The next upcoming events from today onward. Venue and organizer load in the same query.

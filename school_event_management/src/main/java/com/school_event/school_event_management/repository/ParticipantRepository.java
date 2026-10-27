@@ -27,4 +27,18 @@ public interface ParticipantRepository extends JpaRepository<Participant, Intege
     List<Participant> search(@Param("gradeLevel") String gradeLevel,
                              @Param("search") String search,
                              Pageable pageable);
+
+
+
+
+    // Same filters as search(), without paging. Used for the total count.
+    @Query("""
+            select count(p) from Participant p
+            where (:gradeLevel = '' or p.gradeLevel = :gradeLevel)
+              and (:search = ''
+                   or lower(p.studentNumber) like lower(concat('%', :search, '%'))
+                   or lower(p.firstName) like lower(concat('%', :search, '%'))
+                   or lower(p.lastName) like lower(concat('%', :search, '%')))
+            """)
+    long countSearch(@Param("gradeLevel") String gradeLevel, @Param("search") String search);
 }

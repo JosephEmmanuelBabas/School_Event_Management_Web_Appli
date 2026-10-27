@@ -26,6 +26,7 @@ import com.school_event.school_event_management.repository.EventRepository;
 import com.school_event.school_event_management.repository.userAccountRepository;
 import com.school_event.school_event_management.repository.venueRepository;
 import com.school_event.school_event_management.repository.EventScheduleRepository;
+import com.school_event.school_event_management.dto.PageResult;
 
 @Service
 public class EventService {
@@ -69,27 +70,33 @@ public class EventService {
     }
 
     @Transactional(readOnly = true)
-    public List<EventResponse> search(String status, Integer venueId, String search,
-                                      LocalDate from, LocalDate to,
-                                      int page, int size, String sort, String direction) {
+    public PageResult<EventResponse> search(String status, Integer venueId, String search,
+                                            LocalDate from, LocalDate to,
+                                            int page, int size, String sort, String direction) {
         String statusFilter = (status == null || status.isBlank()) ? "" : status.trim();
         if (!statusFilter.isEmpty() && !STATUSES.contains(statusFilter)) {
             throw new InvalidRequestException("Unknown status: '" + statusFilter + "'.");
+        }
+        if (from != null && to != null && to.isBefore(from)) {
+            throw new InvalidRequestException("The 'to' date cannot be before the 'from' date.");
         }
         String sortField = (sort != null && SORT_FIELDS.contains(sort)) ? sort : "eventDate";
         Sort.Direction dir = "asc".equalsIgnoreCase(direction) ? Sort.Direction.ASC : Sort.Direction.DESC;
         Sort ordering = Sort.by(dir, sortField).and(Sort.by(dir, "startTime"));
 
-        return events.search(
-                        statusFilter,
-                        venueId == null ? 0 : venueId,
-                        from == null ? MIN_DATE : from,
-                        to == null ? MAX_DATE : to,
-                        search == null ? "" : search.trim(),
+        Integer venueFilter = venueId == null ? 0 : venueId;
+        LocalDate fromDate = from == null ? MIN_DATE : from;
+        LocalDate toDate = to == null ? MAX_DATE : to;
+        String searchText = search == null ? "" : search.trim();
+
+        List<EventResponse> items = events
+                .search(statusFilter, venueFilter, fromDate, toDate, searchText,
                         PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 100), ordering))
                 .stream()
                 .map(EventResponse::from)
                 .toList();
+        long total = events.countSearch(statusFilter, venueFilter, fromDate, toDate, searchText);
+        return new PageResult<>(items, total);
     }
 
     @Transactional(readOnly = true)

@@ -10,6 +10,10 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
+import org.springframework.data.domain.Pageable;
+import com.school_event.school_event_management.dto.PageResult;
+
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
@@ -73,4 +77,17 @@ class ParticipantServiceTest {
 
         verify(auditService, never()).log(any(), any(), any());
     }
+
+    @Test
+    void search_returnsOnePageAndTheTotalCount() {
+        when(participants.search(eq(""), eq("ana"), any(Pageable.class)))
+                .thenReturn(List.of(new Participant("2024-001", "Ana", "Cruz", "10")));
+        when(participants.countSearch("", "ana")).thenReturn(7L);
+
+        PageResult<ParticipantResponse> page = participantService.search("ana", null, 0, 50);
+
+        assertEquals(1, page.items().size());
+        assertEquals(7, page.totalCount());
+    }
+
 }

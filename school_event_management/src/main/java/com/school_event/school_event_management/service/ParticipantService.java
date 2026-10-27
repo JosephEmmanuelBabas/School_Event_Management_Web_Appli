@@ -16,6 +16,7 @@ import com.school_event.school_event_management.entity.Participant;
 import com.school_event.school_event_management.exception.DuplicateResourceException;
 import com.school_event.school_event_management.exception.ResourceNotFoundException;
 import com.school_event.school_event_management.repository.ParticipantRepository;
+import com.school_event.school_event_management.dto.PageResult;
 
 @Service
 public class ParticipantService {
@@ -31,15 +32,18 @@ public class ParticipantService {
     }
 
     @Transactional(readOnly = true)
-    public List<ParticipantResponse> search(String search, String gradeLevel, int page, int size) {
+    public PageResult<ParticipantResponse> search(String search, String gradeLevel, int page, int size) {
         Sort sort = Sort.by("lastName", "firstName", "participantId");
-        return participants.search(
-                        gradeLevel == null ? "" : gradeLevel.trim(),
-                        search == null ? "" : search.trim(),
+        String gradeFilter = gradeLevel == null ? "" : gradeLevel.trim();
+        String searchText = search == null ? "" : search.trim();
+
+        List<ParticipantResponse> items = participants
+                .search(gradeFilter, searchText,
                         PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 100), sort))
                 .stream()
                 .map(ParticipantResponse::from)
                 .toList();
+        return new PageResult<>(items, participants.countSearch(gradeFilter, searchText));
     }
 
     @Transactional(readOnly = true)

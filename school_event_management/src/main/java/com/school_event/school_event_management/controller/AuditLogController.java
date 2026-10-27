@@ -2,6 +2,7 @@ package com.school_event.school_event_management.controller;
 
 import java.util.List;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -22,8 +23,8 @@ public class AuditLogController {
 
     // Read-only. There is deliberately no POST, PUT or DELETE.
     @GetMapping
-    public List<AuditLogResponse> list(@RequestParam(defaultValue = "0") int page,
-                                       @RequestParam(defaultValue = "50") int size) {
-        return auditService.findRecent(page, size);
+    public ResponseEntity<List<AuditLogResponse>> list(@RequestParam(defaultValue = "0") int page,
+                                                       @RequestParam(defaultValue = "50") int size) {
+        return PagedResponses.of(auditService.findPage(page, size));
     }
 }

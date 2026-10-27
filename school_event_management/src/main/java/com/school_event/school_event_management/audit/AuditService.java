@@ -13,6 +13,7 @@ import com.school_event.school_event_management.dto.AuditLogResponse;
 import com.school_event.school_event_management.entity.AuditLog;
 import com.school_event.school_event_management.repository.AuditLogRepository;
 import com.school_event.school_event_management.security.AppUserPrincipal;
+import com.school_event.school_event_management.dto.PageResult;
 
 @Service
 public class AuditService {
@@ -36,6 +37,14 @@ public class AuditService {
         int safePage = Math.max(page, 0);
         int safeSize = Math.min(Math.max(size, 1), 100);
         return auditLogRepository.findRecent(PageRequest.of(safePage, safeSize));
+    }
+
+    @Transactional(readOnly = true)
+    public PageResult<AuditLogResponse> findPage(int page, int size) {
+        int safePage = Math.max(page, 0);
+        int safeSize = Math.min(Math.max(size, 1), 100);
+        List<AuditLogResponse> items = auditLogRepository.findRecent(PageRequest.of(safePage, safeSize));
+        return new PageResult<>(items, auditLogRepository.count());
     }
 
     private Integer currentUserId() {

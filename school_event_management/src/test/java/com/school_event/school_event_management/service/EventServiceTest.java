@@ -11,6 +11,9 @@ import static org.mockito.Mockito.when;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Optional;
+import java.util.List;
+import org.springframework.data.domain.Pageable;
+import com.school_event.school_event_management.dto.PageResult;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -161,4 +164,28 @@ class EventServiceTest {
         verify(events, never()).saveAndFlush(any());
         verify(auditService, never()).log(any(), any(), any());
     }
+    
+    @Test
+    void search_returnsOnePageAndTheTotalCount() {
+        when(events.search(eq(""), eq(0), any(LocalDate.class), any(LocalDate.class),
+                eq(""), any(Pageable.class))).thenReturn(List.of(eventWithStatus("Upcoming")));
+        when(events.countSearch(eq(""), eq(0), any(LocalDate.class), any(LocalDate.class),
+                eq(""))).thenReturn(42L);
+
+        PageResult<EventResponse> page =
+                eventService.search(null, null, null, null, null, 0, 10, "eventDate", "desc");
+
+        assertEquals(1, page.items().size());
+        assertEquals(42, page.totalCount());
+    }
+
+    @Test
+    void search_rejectsAReversedDateRange() {
+        assertThrows(InvalidRequestException.class, () -> eventService.search(
+                null, null, null, LocalDate.of(2027, 2, 1), LocalDate.of(2027, 1, 1),
+                0, 10, "eventDate", "desc"));
+
+        verify(events, never()).search(any(), any(), any(), any(), any(), any());
+    }
+
 }

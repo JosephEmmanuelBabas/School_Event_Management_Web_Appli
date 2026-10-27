@@ -38,7 +38,7 @@ public class EventController {
     }
 
     @GetMapping
-    public List<EventResponse> list(
+    public ResponseEntity<List<EventResponse>> list(
             @RequestParam(required = false) String status,
             @RequestParam(required = false) Integer venueId,
             @RequestParam(required = false) String search,
@@ -48,7 +48,8 @@ public class EventController {
             @RequestParam(defaultValue = "50") int size,
             @RequestParam(defaultValue = "eventDate") String sort,
             @RequestParam(defaultValue = "desc") String direction) {
-        return eventService.search(status, venueId, search, from, to, page, size, sort, direction);
+        return PagedResponses.of(
+                eventService.search(status, venueId, search, from, to, page, size, sort, direction));
     }
 
     @GetMapping("/{id}")
