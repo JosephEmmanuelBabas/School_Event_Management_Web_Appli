@@ -9,10 +9,10 @@ function Send-Api {
     if ($ContentType) { $p["ContentType"] = $ContentType }
     try {
         $r = Invoke-WebRequest @p
-        return [pscustomobject]@{ Status = [int]$r.StatusCode; Body = [string]$r.Content }
+                return [pscustomobject]@{ Status = [int]$r.StatusCode; Body = [string]$r.Content; Headers = $r.Headers }
     } catch {
         if ($null -eq $_.Exception.Response) { throw }
-        return [pscustomobject]@{ Status = [int]$_.Exception.Response.StatusCode; Body = "" }
+                return [pscustomobject]@{ Status = [int]$_.Exception.Response.StatusCode; Body = ""; Headers = @{} }
     }
 }
 
@@ -442,3 +442,64 @@ foreach ($attId in $rRecords) { Show "Delete attendance record" 204 (Send-Api DE
 Show "Delete event" 204 (Send-Api DELETE "/api/events/$rEvent" $org $h)
 foreach ($partId in $rPeople) { Show "Delete participant" 204 (Send-Api DELETE "/api/participants/$partId" $org $h) }
 Show "Delete the test venue" 204 (Send-Api DELETE "/api/venues/$rVenue" $org $h)
+
+Write-Host "`n=== Paging totals ==="
+$day5 = (Get-Date).AddDays(70).ToString("yyyy-MM-dd")
+
+function Get-Total($Res) { return [int](@($Res.Headers["X-Total-Count"])[0]) }
+function Count-Items($Res, $Field) { return [regex]::Matches($Res.Body, "`"$Field`"").Count }
+
+$h = Get-CsrfHeaders $org
+$pgVenue = Send-Api POST "/api/venues" $org $h (@{ venueName = "Paging Hall $suffix"; location = "Test Wing"; capacity = 50 } | ConvertTo-Json) "application/json"
+Show "Create venue" 201 $pgVenue
+$pgVenueId = (ConvertFrom-Json $pgVenue.Body).venueId
+
+$pgPeople = @()
+foreach ($n in 1..3) {
+    $r = Send-Api POST "/api/participants" $org $h (New-ParticipantBody "PG-$suffix-$n" "Page" "Student$n" "10") "application/json"
+    Show "Create participant $n" 201 $r
+    $pgPeople += (ConvertFrom-Json $r.Body).participantId
+}
+$pgEvents = @()
+$slots = @(@("09:00", "10:00"), @("10:00", "11:00"), @("11:00", "12:00"))
+foreach ($n in 0..2) {
+    $r = Send-Api POST "/api/events" $org $h (New-EventBody "Paging Event $($n + 1) $suffix" $day5 $slots[$n][0] $slots[$n][1] $pgVenueId) "application/json"
+    Show "Create event $($n + 1)" 201 $r
+    $pgEvents += (ConvertFrom-Json $r.Body).eventId
+}
+
+Write-Host "--- participants"
+$r1 = Send-Api GET "/api/participants?search=PG-$suffix&size=2&page=0" $org
+Show "Participants page 1" 200 $r1
+Check "Page 1 has 2 items and total 3" (((Count-Items $r1 "participantId") -eq 2) -and ((Get-Total $r1) -eq 3))
+$r2 = Send-Api GET "/api/participants?search=PG-$suffix&size=2&page=1" $org
+Check "Page 2 has 1 item and total 3" (((Count-Items $r2 "participantId") -eq 1) -and ((Get-Total $r2) -eq 3))
+$r3 = Send-Api GET "/api/participants?search=PG-$suffix&size=2&page=5" $org
+Check "A page beyond the end is empty, total still 3" (((Count-Items $r3 "participantId") -eq 0) -and ((Get-Total $r3) -eq 3))
+$r4 = Send-Api GET "/api/participants?search=no-such-student-$suffix" $org
+Check "A search with no matches has total 0" ((Get-Total $r4) -eq 0)
+$r5 = Send-Api GET "/api/participants?search=PG-$suffix&gradeLevel=11" $org
+Check "The grade filter also narrows the total" ((Get-Total $r5) -eq 0)
+
+Write-Host "--- events"
+$e1 = Send-Api GET "/api/events?venueId=$pgVenueId&size=2" $org
+Show "Events page 1" 200 $e1
+Check "Page 1 has 2 items and total 3" (((Count-Items $e1 "eventId") -eq 2) -and ((Get-Total $e1) -eq 3))
+$e2 = Send-Api GET "/api/events?venueId=$pgVenueId&size=2&page=1" $org
+Check "Page 2 has 1 item and total 3" (((Count-Items $e2 "eventId") -eq 1) -and ((Get-Total $e2) -eq 3))
+$e3 = Send-Api GET "/api/events?venueId=$pgVenueId&status=Completed" $org
+Check "Status filter changes the total (no Completed events)" ((Get-Total $e3) -eq 0)
+$e4 = Send-Api GET "/api/events?venueId=$pgVenueId&from=$day5&to=$day5" $admin3
+Check "Admin sees the same total for a date range" ((Get-Total $e4) -eq 3)
+Show "Events with a reversed date range" 400 (Send-Api GET "/api/events?from=$day5&to=2000-01-01" $org)
+
+Write-Host "--- audit log"
+$a1 = Send-Api GET "/api/audit-logs?size=2" $admin3
+Show "Audit log page" 200 $a1
+Check "Audit page has 2 items and a total of at least 2" (((Count-Items $a1 "logId") -eq 2) -and ((Get-Total $a1) -ge 2))
+Write-Host "      audit entries in total: $(Get-Total $a1)"
+
+Write-Host "--- cleanup"
+foreach ($ev in $pgEvents) { Show "Delete event" 204 (Send-Api DELETE "/api/events/$ev" $org $h) }
+foreach ($pp in $pgPeople) { Show "Delete participant" 204 (Send-Api DELETE "/api/participants/$pp" $org $h) }
+Show "Delete the test venue" 204 (Send-Api DELETE "/api/venues/$pgVenueId" $org $h)
