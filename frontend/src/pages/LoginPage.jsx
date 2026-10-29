@@ -38,7 +38,7 @@ export default function LoginPage() {
   return (
     <main className="login-page">
       <form className="card login-card" onSubmit={handleSubmit} noValidate>
-        <h1>School Event Management</h1>
+        <h1>Eventer:School Event Management</h1>
         <p className="muted">Log in to continue.</p>
 
         {error && <p className="alert alert-error" role="alert">{error}</p>}

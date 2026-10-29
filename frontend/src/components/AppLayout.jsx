@@ -16,6 +16,7 @@ export default function AppLayout() {
         <div className="brand">School Event Management</div>
         <nav aria-label="Main">
           <NavLink to="/" end>Home</NavLink>
+          <NavLink to="/venues">Venues</NavLink>
         </nav>
         <div className="header-user">
           <span>
