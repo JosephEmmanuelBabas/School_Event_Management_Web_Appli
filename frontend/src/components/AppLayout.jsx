@@ -2,7 +2,7 @@ import { NavLink, Outlet, useNavigate } from 'react-router'
 import { useAuth } from '../auth/useAuth'
 
 export default function AppLayout() {
-  const { user, logout } = useAuth()
+  const { user, logout, isAdmin } = useAuth()
   const navigate = useNavigate()
 
   async function handleLogout() {
@@ -16,9 +16,11 @@ export default function AppLayout() {
         <div className="brand">School Event Management</div>
         <nav aria-label="Main">
           <NavLink to="/" end>Home</NavLink>
+          {isAdmin && <NavLink to="/dashboard">Dashboard</NavLink>}
+          <NavLink to="/events">Events</NavLink>
           <NavLink to="/venues">Venues</NavLink>
           <NavLink to="/participants">Participants</NavLink>
-          <NavLink to="/events">Events</NavLink>
+          {isAdmin && <NavLink to="/reports">Reports</NavLink>}
         </nav>
         <div className="header-user">
           <span>

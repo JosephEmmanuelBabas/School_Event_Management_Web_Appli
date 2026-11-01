@@ -38,3 +38,8 @@ export function formatDateTime(value) {
   const [year, month, day] = date.split('-').map(Number)
   return `${MONTHS[month - 1]} ${day}, ${year} ${formatTime(time)}`
 }
+
+// 66.7 -> '66.7%', null -> '—' (no data is not the same as 0%)
+export function formatPercent(value) {
+  return value === null || value === undefined ? '—' : `${value}%`
+}

@@ -3,13 +3,15 @@ import AuthProvider from './auth/AuthProvider'
 import RequireAuth from './auth/RequireAuth'
 import AppLayout from './components/AppLayout'
 import NotificationProvider from './components/notifications/NotificationProvider'
+import DashboardPage from './pages/dashboard/DashboardPage'
+import EventDetailPage from './pages/events/EventDetailPage'
+import EventsPage from './pages/events/EventsPage'
 import HomePage from './pages/HomePage'
 import LoginPage from './pages/LoginPage'
 import NotFoundPage from './pages/NotFoundPage'
-import VenuesPage from './pages/venues/VenuesPage'
 import ParticipantsPage from './pages/participants/ParticipantsPage'
-import EventsPage from './pages/events/EventsPage'
-import EventDetailPage from './pages/events/EventDetailPage'
+import ReportsPage from './pages/reports/ReportsPage'
+import VenuesPage from './pages/venues/VenuesPage'
 
 export default function App() {
   return (
@@ -21,10 +23,17 @@ export default function App() {
             <Route element={<RequireAuth />}>
               <Route element={<AppLayout />}>
                 <Route path="/" element={<HomePage />} />
-                <Route path="/venues" element={<VenuesPage />} />
-                <Route path="/participants" element={<ParticipantsPage />} />
                 <Route path="/events" element={<EventsPage />} />
                 <Route path="/events/:eventId" element={<EventDetailPage />} />
+                <Route path="/venues" element={<VenuesPage />} />
+                <Route path="/participants" element={<ParticipantsPage />} />
+
+                {/* Super Admin only. The server enforces this too. */}
+                <Route element={<RequireAuth roles={['Super Admin']} />}>
+                  <Route path="/dashboard" element={<DashboardPage />} />
+                  <Route path="/reports" element={<ReportsPage />} />
+                </Route>
+
                 <Route path="*" element={<NotFoundPage />} />
               </Route>
             </Route>
