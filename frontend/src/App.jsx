@@ -3,6 +3,8 @@ import AuthProvider from './auth/AuthProvider'
 import RequireAuth from './auth/RequireAuth'
 import AppLayout from './components/AppLayout'
 import NotificationProvider from './components/notifications/NotificationProvider'
+import AccountPage from './pages/account/AccountPage'
+import AuditLogPage from './pages/audit/AuditLogPage'
 import DashboardPage from './pages/dashboard/DashboardPage'
 import EventDetailPage from './pages/events/EventDetailPage'
 import EventsPage from './pages/events/EventsPage'
@@ -11,6 +13,7 @@ import LoginPage from './pages/LoginPage'
 import NotFoundPage from './pages/NotFoundPage'
 import ParticipantsPage from './pages/participants/ParticipantsPage'
 import ReportsPage from './pages/reports/ReportsPage'
+import UsersPage from './pages/users/UsersPage'
 import VenuesPage from './pages/venues/VenuesPage'
 
 export default function App() {
@@ -23,6 +26,7 @@ export default function App() {
             <Route element={<RequireAuth />}>
               <Route element={<AppLayout />}>
                 <Route path="/" element={<HomePage />} />
+                <Route path="/account" element={<AccountPage />} />
                 <Route path="/events" element={<EventsPage />} />
                 <Route path="/events/:eventId" element={<EventDetailPage />} />
                 <Route path="/venues" element={<VenuesPage />} />
@@ -32,6 +36,8 @@ export default function App() {
                 <Route element={<RequireAuth roles={['Super Admin']} />}>
                   <Route path="/dashboard" element={<DashboardPage />} />
                   <Route path="/reports" element={<ReportsPage />} />
+                  <Route path="/users" element={<UsersPage />} />
+                  <Route path="/audit" element={<AuditLogPage />} />
                 </Route>
 
                 <Route path="*" element={<NotFoundPage />} />

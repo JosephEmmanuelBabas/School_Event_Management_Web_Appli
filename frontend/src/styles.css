@@ -369,3 +369,13 @@ textarea { resize: vertical; }
 .plain-list .muted { display: block; font-size: 0.9rem; }
 
 .report-totals { margin: 0.6rem 0 0; color: var(--muted); }
+
+/* ---- users, account, audit ---- */
+.status-active { background: #dcf3e3; color: #14602b; }
+.status-inactive { background: #ececec; color: #4b5563; }
+.status-suspended { background: #fdecec; color: #8a1f1f; }
+
+.badge-plain { margin-left: 0; }
+.user-link { font-weight: 600; text-decoration: none; }
+.user-link:hover { text-decoration: underline; }
+td .tag { margin-left: 0.4rem; }

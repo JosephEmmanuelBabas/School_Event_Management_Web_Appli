@@ -1,4 +1,4 @@
-import { NavLink, Outlet, useNavigate } from 'react-router'
+import { Link, NavLink, Outlet, useNavigate } from 'react-router'
 import { useAuth } from '../auth/useAuth'
 
 export default function AppLayout() {
@@ -21,10 +21,13 @@ export default function AppLayout() {
           <NavLink to="/venues">Venues</NavLink>
           <NavLink to="/participants">Participants</NavLink>
           {isAdmin && <NavLink to="/reports">Reports</NavLink>}
+          {isAdmin && <NavLink to="/users">Users</NavLink>}
+          {isAdmin && <NavLink to="/audit">Audit log</NavLink>}
         </nav>
         <div className="header-user">
           <span>
-            {user.username} <span className="badge">{user.role}</span>
+            <Link to="/account" className="user-link">{user.username}</Link>
+            <span className="badge">{user.role}</span>
           </span>
           <button type="button" className="button button-secondary" onClick={handleLogout}>
             Log out
