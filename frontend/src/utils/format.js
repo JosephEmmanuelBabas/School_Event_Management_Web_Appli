@@ -1,0 +1,32 @@
+const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+// '2027-01-15' -> 'Fri, Jan 15, 2027'. Built from the parts, so no timezone can shift the day.
+export function formatDate(iso) {
+  if (!iso) return ''
+  const [year, month, day] = iso.split('-').map(Number)
+  const weekday = DAYS[new Date(year, month - 1, day).getDay()]
+  return `${weekday}, ${MONTHS[month - 1]} ${day}, ${year}`
+}
+
+// '09:00:00' or '09:00' -> '9:00 AM'
+export function formatTime(value) {
+  if (!value) return ''
+  const [hours, minutes] = value.split(':').map(Number)
+  const suffix = hours >= 12 ? 'PM' : 'AM'
+  const hour12 = hours % 12 === 0 ? 12 : hours % 12
+  return `${hour12}:${String(minutes).padStart(2, '0')} ${suffix}`
+}
+
+// '09:00:00' -> '09:00' (the format <input type="time"> uses)
+export function trimTime(value) {
+  return value ? value.slice(0, 5) : ''
+}
+
+// Today's date in the browser's local time, as 'yyyy-mm-dd'.
+export function todayIso() {
+  const now = new Date()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  return `${now.getFullYear()}-${month}-${day}`
+}

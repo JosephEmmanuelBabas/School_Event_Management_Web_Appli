@@ -18,6 +18,7 @@ export default function AppLayout() {
           <NavLink to="/" end>Home</NavLink>
           <NavLink to="/venues">Venues</NavLink>
           <NavLink to="/participants">Participants</NavLink>
+          <NavLink to="/events">Events</NavLink>
         </nav>
         <div className="header-user">
           <span>

@@ -8,6 +8,7 @@ import LoginPage from './pages/LoginPage'
 import NotFoundPage from './pages/NotFoundPage'
 import VenuesPage from './pages/venues/VenuesPage'
 import ParticipantsPage from './pages/participants/ParticipantsPage'
+import EventsPage from './pages/events/EventsPage'
 
 export default function App() {
   return (
@@ -21,6 +22,7 @@ export default function App() {
                 <Route path="/" element={<HomePage />} />
                 <Route path="/venues" element={<VenuesPage />} />
                 <Route path="/participants" element={<ParticipantsPage />} />
+                <Route path="/events" element={<EventsPage />} />
                 <Route path="*" element={<NotFoundPage />} />
               </Route>
             </Route>

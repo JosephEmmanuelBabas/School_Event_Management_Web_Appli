@@ -1,5 +1,19 @@
-// columns: [{ key, header, render?(row), className? }]. The caption is for screen readers.
-export default function DataTable({ caption, columns, rows, rowKey, emptyMessage = 'Nothing to show.' }) {
+// columns: [{ key, header, render?(row), className?, sortable? }]. The caption is for screen readers.
+// Pass sort = { key, direction } and onSort(key) to make columns with sortable: true clickable.
+export default function DataTable({
+  caption,
+  columns,
+  rows,
+  rowKey,
+  emptyMessage = 'Nothing to show.',
+  sort,
+  onSort,
+}) {
+  function ariaSort(column) {
+    if (!column.sortable || !sort || sort.key !== column.key) return undefined
+    return sort.direction === 'asc' ? 'ascending' : 'descending'
+  }
+
   return (
     <div className="table-wrap">
       <table className="data-table">
@@ -7,8 +21,17 @@ export default function DataTable({ caption, columns, rows, rowKey, emptyMessage
         <thead>
           <tr>
             {columns.map((column) => (
-              <th key={column.key} scope="col" className={column.className}>
-                {column.header}
+              <th key={column.key} scope="col" className={column.className} aria-sort={ariaSort(column)}>
+                {column.sortable && onSort ? (
+                  <button type="button" className="sort-button" onClick={() => onSort(column.key)}>
+                    {column.header}
+                    <span aria-hidden="true">
+                      {sort?.key === column.key ? (sort.direction === 'asc' ? ' ▲' : ' ▼') : ' ↕'}
+                    </span>
+                  </button>
+                ) : (
+                  column.header
+                )}
               </th>
             ))}
           </tr>
