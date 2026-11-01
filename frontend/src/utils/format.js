@@ -30,3 +30,11 @@ export function todayIso() {
   const day = String(now.getDate()).padStart(2, '0')
   return `${now.getFullYear()}-${month}-${day}`
 }
+
+// '2027-01-15T15:05:03.123456' -> 'Jan 15, 2027 3:05 PM'
+export function formatDateTime(value) {
+  if (!value) return ''
+  const [date, time] = value.split('T')
+  const [year, month, day] = date.split('-').map(Number)
+  return `${MONTHS[month - 1]} ${day}, ${year} ${formatTime(time)}`
+}

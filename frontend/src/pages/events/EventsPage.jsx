@@ -10,6 +10,7 @@ import { ALL_STATUSES, isOpenStatus } from '../../utils/eventStatus'
 import { formatDate, formatTime } from '../../utils/format'
 import EventFormDialog from './EventFormDialog'
 import EventStatusDialog from './EventStatusDialog'
+import { Link } from 'react-router'
 
 const PAGE_SIZE = 10
 const FILTER_DELAY_MS = 350
@@ -157,7 +158,7 @@ export default function EventsPage() {
   const columns = [
     { key: 'eventDate', header: 'Date', sortable: true, render: (e) => formatDate(e.eventDate) },
     { key: 'time', header: 'Time', render: (e) => `${formatTime(e.startTime)} – ${formatTime(e.endTime)}` },
-    { key: 'eventName', header: 'Event', sortable: true },
+    { key: 'eventName',header: 'Event',sortable: true,render: (e) => <Link to={`/events/${e.eventId}`}>{e.eventName}</Link>,},
     { key: 'venueName', header: 'Venue' },
     { key: 'eventStatus', header: 'Status', sortable: true, render: (e) => <StatusBadge status={e.eventStatus} /> },
     { key: 'organizerName', header: 'Organizer' },

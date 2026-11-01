@@ -10,3 +10,8 @@ export const ALL_STATUSES = ['Upcoming', 'Ongoing', 'Completed', 'Cancelled']
 export function isOpenStatus(status) {
   return status in NEXT_STATUSES
 }
+
+// Attendance can be recorded (and corrected) only while an event is Ongoing or Completed.
+export function canRecordAttendance(status) {
+  return status === 'Ongoing' || status === 'Completed'
+}

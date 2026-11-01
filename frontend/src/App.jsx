@@ -9,6 +9,7 @@ import NotFoundPage from './pages/NotFoundPage'
 import VenuesPage from './pages/venues/VenuesPage'
 import ParticipantsPage from './pages/participants/ParticipantsPage'
 import EventsPage from './pages/events/EventsPage'
+import EventDetailPage from './pages/events/EventDetailPage'
 
 export default function App() {
   return (
@@ -23,6 +24,7 @@ export default function App() {
                 <Route path="/venues" element={<VenuesPage />} />
                 <Route path="/participants" element={<ParticipantsPage />} />
                 <Route path="/events" element={<EventsPage />} />
+                <Route path="/events/:eventId" element={<EventDetailPage />} />
                 <Route path="*" element={<NotFoundPage />} />
               </Route>
             </Route>
