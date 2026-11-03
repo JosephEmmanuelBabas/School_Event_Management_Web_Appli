@@ -1,16 +1,41 @@
-# React + Vite
+# Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+The React app of the High School Event Management System, built with Vite. For the whole project (database, backend, setup), see the [main README](../README.md).
 
-Currently, two official plugins are available:
+## Run it
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+The backend must be running on port 8080 first.
 
-## React Compiler
+```
+npm install
+npm run dev
+```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Open <http://localhost:5173>. The dev server forwards every `/api/...` request to `http://localhost:8080` (see `vite.config.js`), so the browser only talks to one address and the session cookie and CSRF token work without any CORS setup.
 
-## Expanding the Oxlint configuration
+On Windows PowerShell, if `npm` says running scripts is disabled, use Command Prompt or Git Bash, or type `npm.cmd`.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+## Scripts
+
+| Command | What it does |
+|---|---|
+| `npm run dev` | Development server with hot reload (port 5173) |
+| `npm run build` | Production build into `dist/` |
+| `npm run lint` | oxlint over the source |
+
+## Source layout
+
+| Folder | Contents |
+|---|---|
+| `src/api/client.js` | The only place that calls the backend: adds the CSRF token to writes, turns error responses into `ApiError`, reads the `X-Total-Count` header for paged lists |
+| `src/auth/` | Login state (`AuthProvider`, `useAuth`) and `RequireAuth` for protected routes |
+| `src/components/` | Reusable parts: `DataTable`, `Pagination`, `Modal`, `ConfirmDialog`, `Field`, `StatusBadge`, notifications, `AppLayout` |
+| `src/hooks/` | Small data-loading hooks (`useApiList`, `useApiResource`, `useApiPage`) |
+| `src/pages/` | One folder per screen: events, venues, participants, reports, dashboard, users, account, audit |
+| `src/utils/` | Date and time formatting, status rules, password check |
+
+## Notes
+
+- Hiding a button by role is only a convenience. The server decides what each role may do, on every request.
+- Client-side validation mirrors the server's rules, but the server's answer always wins: error messages from the API are shown under the matching form field.
+- Written in plain JavaScript; the only routing dependency is `react-router`.
