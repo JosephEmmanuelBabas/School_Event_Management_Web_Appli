@@ -2,7 +2,7 @@
 
 A web-based system that centralizes school event information that is usually scattered across paper forms, spreadsheets and messaging apps: events, schedules, venues, staff assignments, participant attendance and an audit trail, in one place.
 
-Group 2 project for the Database Administration course. The design (requirements, business rules, ERD, schema, constraints, architecture) was planned first in the project blueprint; this repository is the implementation.
+Group 2 DBA project Web App for the Database Administration course. The design (requirements, business rules, ERD, schema, constraints, architecture) was planned first in the project blueprint; this repository is the implementation.
 
 ## Features
 
