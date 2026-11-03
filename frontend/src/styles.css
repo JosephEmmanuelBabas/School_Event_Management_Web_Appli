@@ -44,6 +44,7 @@ a { color: var(--primary); }
 .app-header nav { display: flex; gap: 1rem; flex: 1; }
 .app-header nav a { text-decoration: none; color: var(--muted); padding: 0.25rem 0; }
 .app-header nav a.active { color: var(--primary); font-weight: 600; border-bottom: 2px solid var(--primary); }
+.app-header nav { display: flex; flex-wrap: wrap; gap: 1rem; flex: 1; }
 .header-user { display: flex; align-items: center; gap: 0.75rem; }
 
 .page { max-width: 960px; margin: 0 auto; padding: 1.5rem 1.25rem; }
@@ -379,3 +380,38 @@ textarea { resize: vertical; }
 .user-link { font-weight: 600; text-decoration: none; }
 .user-link:hover { text-decoration: underline; }
 td .tag { margin-left: 0.4rem; }
+
+/* ---- home, keyboard access, small screens ---- */
+.quick-links { display: flex; flex-wrap: wrap; gap: 0.6rem; margin: 0 0 1rem; }
+.quick-link {
+  padding: 0.5rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.quick-link:hover { background: #e5edff; border-color: var(--primary); }
+
+.skip-link {
+  position: absolute;
+  left: 0.75rem;
+  top: -4rem;
+  z-index: 2000;
+  padding: 0.6rem 1rem;
+  background: var(--primary);
+  color: #fff;
+  border-radius: 6px;
+  font-weight: 600;
+}
+.skip-link:focus { top: 0.75rem; }
+
+.main-content:focus { outline: none; }
+
+@media (max-width: 520px) {
+  .field-row { grid-template-columns: 1fr; }
+  .details { grid-template-columns: 1fr; }
+  .details dt { margin-top: 0.4rem; }
+  .row-actions { flex-wrap: wrap; }
+  .page { padding: 1rem 0.75rem; }
+}

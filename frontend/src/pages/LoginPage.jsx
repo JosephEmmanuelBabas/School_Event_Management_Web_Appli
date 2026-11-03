@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Navigate, useLocation } from 'react-router'
 import { useAuth } from '../auth/useAuth'
 
@@ -9,7 +9,9 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
-
+  useEffect(() => {
+    document.title = 'Log in · School Event Management'
+  }, [])
   const destination = location.state?.from || '/'
 
   // Already logged in (or just logged in): go to the page the user wanted.

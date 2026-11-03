@@ -1,66 +1,59 @@
-import { useEffect, useState } from 'react'
-import { api } from '../api/client'
+import { Link } from 'react-router'
 import { useAuth } from '../auth/useAuth'
+import { useApiResource } from '../hooks/useApiResource'
+import { addDaysIso, todayIso } from '../utils/format'
+import EventPanel from './EventPanel'
 
 export default function HomePage() {
-  const { user } = useAuth()
-  const [account, setAccount] = useState(null)
-  const [venueCount, setVenueCount] = useState(null)
-  const [error, setError] = useState('')
-
-  useEffect(() => {
-    let cancelled = false
-    Promise.all([api.get('/account/me'), api.get('/venues')])
-      .then(([me, venues]) => {
-        if (cancelled) return
-        setAccount(me)
-        setVenueCount(venues.length)
-      })
-      .catch((err) => {
-        if (!cancelled) setError(err.message)
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [])
+  const { user, isAdmin } = useAuth()
+  const { data: account } = useApiResource('/account/me')
 
   return (
     <main className="page">
       <h1>Welcome{account ? `, ${account.firstName}` : ''}</h1>
+      <p className="muted">Signed in as {user.role}.</p>
 
-      {error && <p className="alert alert-error" role="alert">{error}</p>}
-
-      <section className="card" aria-label="Your account">
-        <h2>Your account</h2>
-        {account ? (
-          <dl className="details">
-            <dt>Name</dt>
-            <dd>{account.firstName} {account.lastName}</dd>
-            <dt>Username</dt>
-            <dd>{account.username}</dd>
-            <dt>Role</dt>
-            <dd>{user.role}</dd>
-            <dt>Email</dt>
-            <dd>{account.email || 'Not set'}</dd>
-            <dt>Status</dt>
-            <dd>{account.accountStatus}</dd>
-          </dl>
+      <nav className="quick-links" aria-label="Quick links">
+        <Link to="/events" className="quick-link">Events</Link>
+        {isAdmin ? (
+          <>
+            <Link to="/dashboard" className="quick-link">Dashboard</Link>
+            <Link to="/reports" className="quick-link">Attendance reports</Link>
+            <Link to="/users" className="quick-link">Users</Link>
+            <Link to="/audit" className="quick-link">Audit log</Link>
+          </>
         ) : (
-          !error && <p className="muted" role="status">Loading…</p>
+          <>
+            <Link to="/venues" className="quick-link">Venues</Link>
+            <Link to="/participants" className="quick-link">Participants</Link>
+          </>
         )}
-      </section>
+        <Link to="/account" className="quick-link">My account</Link>
+      </nav>
 
-      <section className="card" aria-label="Connection check">
-        <h2>Connection check</h2>
-        <p>
-          Venues in the database:{' '}
-          <strong>{venueCount === null ? '…' : venueCount}</strong>
-        </p>
-        <p className="muted">
-          This number comes from PostgreSQL through the Spring Boot API.
-          The real pages (events, attendance, dashboard) are added one step at a time.
-        </p>
-      </section>
+      <EventPanel
+        id="home-ongoing"
+        title="Happening now"
+        note={isAdmin ? undefined : 'Open an event to record attendance.'}
+        params={{ status: 'Ongoing', size: 10, sort: 'eventDate', direction: 'asc' }}
+        emptyMessage="No events are ongoing."
+      />
+
+      <EventPanel
+        id="home-upcoming"
+        title="Coming up"
+        params={{ status: 'Upcoming', from: todayIso(), size: 5, sort: 'eventDate', direction: 'asc' }}
+        emptyMessage="No upcoming events."
+      />
+
+      <EventPanel
+        id="home-attention"
+        title="Needs attention"
+        note="These events are still marked Upcoming, but their date has passed. Open each one to start it (and complete it later) or to cancel it."
+        params={{ status: 'Upcoming', to: addDaysIso(-1), size: 10, sort: 'eventDate', direction: 'asc' }}
+        emptyMessage=""
+        hideWhenEmpty
+      />
     </main>
   )
 }
