@@ -279,6 +279,7 @@ db/
 
 **3b. Fill it in.** Open `application-local.properties` in any editor. In VS Code: `code school_event_management/src/main/resources/application-local.properties`. The file contains placeholder values:
 
+# Example
 ```properties
 spring.datasource.password=change-me
 spring.flyway.password=change-me
@@ -399,6 +400,12 @@ Open **Terminal 2**. From the repository root:
 cd frontend
 npm install
 npm run dev
+```
+
+if npm install or npm run dev is not working use this just add `'.cmd'` after `'npm'`
+```
+npm.cmd install
+npm.cmd run dev
 ```
 
 `npm install` downloads the libraries (about a minute, only needed once; you can ignore messages about "funding" and "audit"). `npm run dev` then prints something like:
