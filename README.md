@@ -242,6 +242,7 @@ psql -U postgres -h localhost -d grp02_event_management_db
 **Prefer a graphical tool, or `psql` is not on your PATH?** You can run the script from the **SQL Shell (psql)** program that came with PostgreSQL. Accept the defaults for server, database, port and username (press Enter), type the superuser password, then run:
 
 ```
+Example change it to the directory path you have in your laptop.
 \i 'C:/Users/Anna/School_Event_Management_Web_Appli/docs/database-setup.sql'
 ```
 
@@ -325,6 +326,8 @@ Open **Terminal 1**, go into the backend folder, and start it:
 cd school_event_management
 ./mvnw spring-boot:run
 ```
+If you see an error that jdk is not found use this code in powershell: `$env:JAVA_HOME = "C:\Program Files\Java\jdk-25"`.
+Then run again with this command `.\mvnw.cmd spring-boot:run`
 
 (Windows PowerShell: `.\mvnw.cmd spring-boot:run`.)
 
@@ -353,6 +356,7 @@ curl http://localhost:8080/api/auth/csrf
 (In Windows PowerShell, type `curl.exe` instead of `curl`.) You should get a short piece of JSON like:
 
 ```
+You will see this output
 {"headerName":"X-CSRF-TOKEN","token":"7f3e...long random text..."}
 ```
 
