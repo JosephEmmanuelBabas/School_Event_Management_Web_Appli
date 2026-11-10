@@ -1,0 +1,117 @@
+-- =====================================================================
+-- Access Control Script: Gym Management System
+-- Database: gym_management_db (or target database)
+-- Purpose : Define role-based access control (RBAC), connection security, 
+--           granular table grants, and Row-Level Security (RLS) policies.
+-- =====================================================================
+
+BEGIN;
+
+-- ---------------------------------------------------------------------
+-- 1. Revoke Default Public Access
+-- ---------------------------------------------------------------------
+REVOKE ALL ON DATABASE CURRENT_DATABASE() FROM PUBLIC;
+REVOKE ALL ON SCHEMA public FROM PUBLIC;
+
+-- ---------------------------------------------------------------------
+-- 2. Create Group Roles (No Login Capability)
+-- ---------------------------------------------------------------------
+CREATE ROLE gym_admin_grp NOLOGIN;
+CREATE ROLE trainer_grp NOLOGIN;
+CREATE ROLE member_portal_grp NOLOGIN;
+CREATE ROLE gym_auditor_grp NOLOGIN;
+
+-- ---------------------------------------------------------------------
+-- 3. Create Login Accounts (Replace with secure passwords in production)
+-- ---------------------------------------------------------------------
+CREATE ROLE admin_user LOGIN PASSWORD 'admin_secure_password_2026';
+CREATE ROLE trainer_user LOGIN PASSWORD 'trainer_secure_password_2026';
+CREATE ROLE member_user LOGIN PASSWORD 'member_secure_password_2026';
+CREATE ROLE auditor_user LOGIN PASSWORD 'auditor_secure_password_2026';
+
+-- ---------------------------------------------------------------------
+-- 4. Assign Login Accounts to Group Roles
+-- ---------------------------------------------------------------------
+GRANT gym_admin_grp TO admin_user;
+GRANT trainer_grp TO trainer_user;
+GRANT member_portal_grp TO member_user;
+GRANT gym_auditor_grp TO auditor_user;
+
+-- ---------------------------------------------------------------------
+-- 5. Grant Connection and Schema Usage
+-- ---------------------------------------------------------------------
+GRANT CONNECT ON DATABASE CURRENT_DATABASE() TO gym_admin_grp, trainer_grp, member_portal_grp, gym_auditor_grp;
+GRANT USAGE ON SCHEMA public TO gym_admin_grp, trainer_grp, member_portal_grp, gym_auditor_grp;
+
+-- ---------------------------------------------------------------------
+-- 6. Grant Granular Table & Sequence Privileges
+-- ---------------------------------------------------------------------
+
+-- **Gym Admin Role**: Full operational control over all tables and sequences
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO gym_admin_grp;
+GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA public TO gym_admin_grp;
+
+-- **Trainer Role**: Can view gym details, manage class schedules, and view enrolled members/attendance
+GRANT SELECT ON trainers, members, membership_plans, memberships, classes, class_enrollments, attendance TO trainer_grp;
+GRANT INSERT, UPDATE ON classes TO trainer_grp; -- Trainers can create/update classes
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO trainer_grp;
+
+-- **Member Portal Role**: Restricted access for gym members
+-- Can view trainers, plans, classes, and their own profile/memberships/payments/enrollments/attendance
+GRANT SELECT ON trainers, membership_plans, classes TO member_portal_grp;
+GRANT SELECT, INSERT, UPDATE ON members, class_enrollments TO member_portal_grp;
+GRANT SELECT ON memberships, payments, attendance TO member_portal_grp;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO member_portal_grp;
+
+-- **Auditor Role**: Read-only compliance and reporting access across all operational data
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO gym_auditor_grp;
+
+-- ---------------------------------------------------------------------
+-- 7. Row-Level Security (RLS) Implementation for Members
+-- ---------------------------------------------------------------------
+
+-- Enable RLS on member-centric tables
+ALTER TABLE members ENABLE ROW LEVEL SECURITY;
+ALTER TABLE memberships ENABLE ROW LEVEL SECURITY;
+ALTER TABLE payments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE class_enrollments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE attendance ENABLE ROW LEVEL SECURITY;
+
+-- Admins and Auditors bypass RLS for full visibility
+CREATE POLICY admin_all_members ON members FOR ALL TO gym_admin_grp USING (true) WITH CHECK (true);
+CREATE POLICY admin_all_memberships ON memberships FOR ALL TO gym_admin_grp USING (true) WITH CHECK (true);
+CREATE POLICY admin_all_payments ON payments FOR ALL TO gym_admin_grp USING (true) WITH CHECK (true);
+CREATE POLICY admin_all_enrollments ON class_enrollments FOR ALL TO gym_admin_grp USING (true) WITH CHECK (true);
+CREATE POLICY admin_all_attendance ON attendance FOR ALL TO gym_admin_grp USING (true) WITH CHECK (true);
+
+CREATE POLICY auditor_select_members ON members FOR SELECT TO gym_auditor_grp USING (true);
+CREATE POLICY auditor_select_memberships ON memberships FOR SELECT TO gym_auditor_grp USING (true);
+CREATE POLICY auditor_select_payments ON payments FOR SELECT TO gym_auditor_grp USING (true);
+CREATE POLICY auditor_select_enrollments ON class_enrollments FOR SELECT TO gym_auditor_grp USING (true);
+CREATE POLICY auditor_select_attendance ON attendance FOR SELECT TO gym_auditor_grp USING (true);
+
+-- Members can only view and update their own record and associated activities
+-- (Requires application to set `app.current_member_id` via session variables or connection pooling middleware)
+CREATE POLICY member_self_members ON members 
+    FOR ALL TO member_portal_grp 
+    USING (member_id = NULLIF(current_setting('app.current_member_id', true), '')::integer)
+    WITH CHECK (member_id = NULLIF(current_setting('app.current_member_id', true), '')::integer);
+
+CREATE POLICY member_self_memberships ON memberships 
+    FOR SELECT TO member_portal_grp 
+    USING (member_id = NULLIF(current_setting('app.current_member_id', true), '')::integer);
+
+CREATE POLICY member_self_payments ON payments 
+    FOR SELECT TO member_portal_grp 
+    USING (membership_id IN (SELECT membership_id FROM memberships WHERE member_id = NULLIF(current_setting('app.current_member_id', true), '')::integer));
+
+CREATE POLICY member_self_enrollments ON class_enrollments 
+    FOR ALL TO member_portal_grp 
+    USING (member_id = NULLIF(current_setting('app.current_member_id', true), '')::integer)
+    WITH CHECK (member_id = NULLIF(current_setting('app.current_member_id', true), '')::integer);
+
+CREATE POLICY member_self_attendance ON attendance 
+    FOR SELECT TO member_portal_grp 
+    USING (member_id = NULLIF(current_setting('app.current_member_id', true), '')::integer);
+
+COMMIT;

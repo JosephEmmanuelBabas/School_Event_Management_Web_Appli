@@ -1,0 +1,89 @@
+-- =====================================================================
+-- Access Control Script: Applicant Management System (AMS)
+-- Database: grp07_applicantdb
+-- Purpose : Define role-based access control (RBAC), security grants, 
+--           and Row-Level Security (RLS) data isolation policies.
+-- =====================================================================
+
+BEGIN;
+
+-- ---------------------------------------------------------------------
+-- 1. Revoke Default Public Access
+-- ---------------------------------------------------------------------
+REVOKE ALL ON DATABASE grp07_applicantdb FROM PUBLIC;
+REVOKE ALL ON SCHEMA public FROM PUBLIC;
+
+-- ---------------------------------------------------------------------
+-- 2. Create Group Roles (No Login Capability)
+-- ---------------------------------------------------------------------
+CREATE ROLE hr_admin_grp NOLOGIN;
+CREATE ROLE applicant_grp NOLOGIN;
+CREATE ROLE readonly_auditor_grp NOLOGIN;
+
+-- ---------------------------------------------------------------------
+-- 3. Create Login Accounts (Replace with secure passwords in production)
+-- ---------------------------------------------------------------------
+CREATE ROLE hr_user LOGIN PASSWORD 'hr_secure_password_2026';
+CREATE ROLE applicant_user LOGIN PASSWORD 'applicant_secure_password_2026';
+CREATE ROLE auditor_user LOGIN PASSWORD 'auditor_secure_password_2026';
+
+-- ---------------------------------------------------------------------
+-- 4. Assign Login Accounts to Group Roles
+-- ---------------------------------------------------------------------
+GRANT hr_admin_grp TO hr_user;
+GRANT applicant_grp TO applicant_user;
+GRANT readonly_auditor_grp TO auditor_user;
+
+-- ---------------------------------------------------------------------
+-- 5. Grant Connection and Schema Usage
+-- ---------------------------------------------------------------------
+GRANT CONNECT ON DATABASE grp07_applicantdb TO hr_admin_grp, applicant_grp, readonly_auditor_grp;
+GRANT USAGE ON SCHEMA public TO hr_admin_grp, applicant_grp, readonly_auditor_grp;
+
+-- ---------------------------------------------------------------------
+-- 6. Grant Granular Table & Sequence Privileges
+-- ---------------------------------------------------------------------
+
+-- **HR Admin Role**: Full operational control over all tables and sequences
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO hr_admin_grp;
+GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA public TO hr_admin_grp;
+
+-- **Applicant Role**: Restricted and controlled access
+-- Can view catalog and lookup tables:
+GRANT SELECT ON department, position, application_status, requirement TO applicant_grp;
+-- Can manage their own profile, applications, and requirements:
+GRANT SELECT, INSERT, UPDATE ON applicant, application, applicant_requirement TO applicant_grp;
+-- Explicitly excluded: 'interview' table remains strictly for internal HR use.
+-- Allow sequence usage for generating primary keys on insert:
+GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA public TO applicant_grp;
+
+-- **Auditor Role**: Read-only compliance and reporting access
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO readonly_auditor_grp;
+
+-- ---------------------------------------------------------------------
+-- 7. Row-Level Security (RLS) Implementation
+-- ---------------------------------------------------------------------
+
+-- Enable RLS on sensitive applicant tables
+ALTER TABLE applicant ENABLE ROW LEVEL SECURITY;
+ALTER TABLE application ENABLE ROW LEVEL SECURITY;
+ALTER TABLE applicant_requirement ENABLE ROW LEVEL SECURITY;
+
+-- HR Admins bypass RLS for complete administrative oversight
+CREATE POLICY hr_all_applicant ON applicant FOR ALL TO hr_admin_grp USING (true) WITH CHECK (true);
+CREATE POLICY hr_all_application ON application FOR ALL TO hr_admin_grp USING (true) WITH CHECK (true);
+CREATE POLICY hr_all_appreq ON applicant_requirement FOR ALL TO hr_admin_grp USING (true) WITH CHECK (true);
+
+-- Auditors have read-only visibility across all rows
+CREATE POLICY auditor_select_applicant ON applicant FOR SELECT TO readonly_auditor_grp USING (true);
+CREATE POLICY auditor_select_application ON application FOR SELECT TO readonly_auditor_grp USING (true);
+CREATE POLICY auditor_select_appreq ON applicant_requirement FOR SELECT TO readonly_auditor_grp USING (true);
+
+-- Applicants can only access records matching their authenticated session/email
+-- (Requires application layer to set session context or JWT claims)
+CREATE POLICY applicant_self_access ON applicant 
+    FOR ALL TO applicant_grp 
+    USING (email = current_setting('app.current_user_email', true))
+    WITH CHECK (email = current_setting('app.current_user_email', true));
+
+COMMIT;
